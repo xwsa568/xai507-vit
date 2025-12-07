@@ -6,7 +6,7 @@ Install the required dependencies using `requirements.txt`:
 
 ```bash
 pip install -r requirements.txt
-
+```
 Here are the execution commands in Markdown.
 
 ## Run Commands
