@@ -43,7 +43,7 @@ def plot_results(histories):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default='all', choices=['all', 'baseline', 'rope', 'custom'])
+    parser.add_argument('--mode', type=str, default='all', choices=['all', 'baseline', 'rope', 'multi'])
     args = parser.parse_args()
 
     set_seed(cfg.seed)
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # Loader가 3개 리턴됨
     train_loader, val_loader, test_loader = get_dataloaders()
     
-    modes = ['baseline', 'rope', 'custom'] if args.mode == 'all' else [args.mode]
+    modes = ['baseline', 'rope', 'multi'] if args.mode == 'all' else [args.mode]
     histories = {}
     test_results = {}
 

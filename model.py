@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 from config import cfg
-from pe_methods import get_2d_sincos_pos_embed, RotaryEmbedding, apply_rotary_pos_emb, LearnablePE
+from pe_methods import get_2d_sincos_pos_embed, RotaryEmbedding, apply_rotary_pos_emb, LearnablePE, MultiScalePE
 
 class Attention(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, use_rope=False):
@@ -96,6 +96,10 @@ class VisionTransformer(nn.Module):
                 get_2d_sincos_pos_embed(self.embed_dim, self.img_size//self.patch_size, cls_token=True), 
                 requires_grad=False
             )
+        elif pe_type == 'multiscale':
+            # block_size는 cfg에서 가져오거나 기본값 2 사용
+            block_size = getattr(cfg, 'block_size', 2) 
+            self.pe_module = MultiScalePE(self.embed_dim, self.grid_size, block_size=block_size)
         elif pe_type == 'custom':
             # Learnable PE
             self.pe_module = LearnablePE(self.num_patches, self.embed_dim)
@@ -129,6 +133,8 @@ class VisionTransformer(nn.Module):
         if self.pe_type == 'baseline':
             x = x + self.pos_embed
         elif self.pe_type == 'custom':
+            x = self.pe_module(x)
+        elif self.pe_type == 'multiscale':
             x = self.pe_module(x)
         
         x = self.pos_drop(x)

@@ -99,3 +99,57 @@ class LearnablePE(nn.Module):
 
     def forward(self, x):
         return x + self.pos_embed
+
+# pe_methods.py 하단에 추가
+
+class MultiScalePE(nn.Module):
+    def __init__(self, embed_dim, grid_size, block_size=2):
+        super().__init__()
+        assert embed_dim % 2 == 0
+        
+        # P1, P2 투영을 위한 Linear Layer (D -> D/2)
+        # 위치 정보를 학습하여 압축
+        self.proj_p1 = nn.Linear(embed_dim, embed_dim // 2)
+        self.proj_p2 = nn.Linear(embed_dim, embed_dim // 2)
+        
+        # --- Grid 생성 ---
+        # numpy grid 생성
+        grid_h = np.arange(grid_size, dtype=np.float32)
+        grid_w = np.arange(grid_size, dtype=np.float32)
+        grid = np.meshgrid(grid_w, grid_h)
+        
+        # 1) P1: Fine-grained Grid (기존과 동일)
+        grid_p1 = np.stack(grid, axis=0) # [2, H, W]
+        grid_p1 = grid_p1.reshape([2, 1, grid_size, grid_size])
+        
+        # 2) P2: Coarse-grained Grid (Block 단위)
+        # 좌표를 block_size로 나누고 내림하여 같은 블럭끼리 같은 좌표 공유
+        grid_p2 = np.floor(np.stack(grid, axis=0) / block_size)
+        grid_p2 = grid_p2.reshape([2, 1, grid_size, grid_size])
+
+        # --- Sinusoidal Encoding 생성 ---
+        # 기존 함수 재활용 (D 차원 생성)
+        emb_p1 = get_2d_sincos_pos_embed_from_grid(embed_dim, grid_p1) # [N, D]
+        emb_p2 = get_2d_sincos_pos_embed_from_grid(embed_dim, grid_p2) # [N, D]
+
+        # --- CLS 토큰 (0으로 채움) 및 병합 ---
+        emb_p1 = np.concatenate([np.zeros([1, embed_dim]), emb_p1], axis=0)
+        emb_p2 = np.concatenate([np.zeros([1, embed_dim]), emb_p2], axis=0)
+
+        # Buffer 등록 (학습되지 않는 고정 텐서지만, GPU 이동은 자동)
+        self.register_buffer('p1', torch.from_numpy(emb_p1).float())
+        self.register_buffer('p2', torch.from_numpy(emb_p2).float())
+
+    def forward(self, x):
+        # x: [B, N, D]
+        
+        # 1. Projection (D -> D/2)
+        # 학습 가능한 가중치로 중요한 위치 정보 추출
+        p1_feat = self.proj_p1(self.p1)
+        p2_feat = self.proj_p2(self.p2)
+        
+        # 2. Concatenate (D/2 + D/2 -> D)
+        pe = torch.cat([p1_feat, p2_feat], dim=-1) # [N, D]
+        
+        # 3. Add to input
+        return x + pe.unsqueeze(0)
