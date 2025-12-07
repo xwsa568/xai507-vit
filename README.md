@@ -7,7 +7,6 @@ Install the required dependencies using `requirements.txt`:
 ```bash
 pip install -r requirements.txt
 ```
-Here are the execution commands in Markdown.
 
 ## Run Commands
 
@@ -23,8 +22,6 @@ python main.py --mode multiscale
 python main.py --mode baseline
 python main.py --pe-type rope
 ```
-
-Here is the updated section for the README.
 
 ### 4\. Run All Methods
 
