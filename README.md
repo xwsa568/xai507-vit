@@ -20,7 +20,7 @@ python main.py --mode multiscale
 
 ```bash
 python main.py --mode baseline
-python main.py --pe-type rope
+python main.py --mode rope
 ```
 
 ### 4\. Run All Methods
