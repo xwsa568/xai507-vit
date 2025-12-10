@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 from config import cfg
-from pe_methods import get_2d_sincos_pos_embed, RotaryEmbedding, apply_rotary_pos_emb, LearnablePE, MultiScalePE, PolarPE
+from pe_methods import get_2d_sincos_pos_embed, RotaryEmbedding, apply_rotary_pos_emb, LearnablePE, MultiScalePE, DualPE, PolarOnlyPE
 
 class Attention(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, use_rope=False):
@@ -99,9 +99,12 @@ class VisionTransformer(nn.Module):
         elif pe_type == 'multiscale':
             block_size = getattr(cfg, 'block_size', 2) 
             self.pe_module = MultiScalePE(self.embed_dim, self.img_size//self.patch_size, block_size=block_size)
-        elif pe_type == 'polar':
-            # DCPE (Cartesian + Polar)
-            self.pe_module = PolarPE(self.embed_dim, self.img_size//self.patch_size)
+        elif pe_type == 'dual':
+            # Dual PE (Cartesian + Polar)
+            self.pe_module = DualPE(self.embed_dim, self.img_size//self.patch_size)
+        elif pe_type == 'polar_only':
+            # Polar Only PE
+            self.pe_module = PolarOnlyPE(self.embed_dim, self.img_size//self.patch_size)
         elif pe_type == 'custom':
             # Learnable PE
             self.pe_module = LearnablePE(self.num_patches, self.embed_dim)
@@ -138,7 +141,9 @@ class VisionTransformer(nn.Module):
             x = self.pe_module(x)
         elif self.pe_type == 'multiscale':
             x = self.pe_module(x)
-        elif self.pe_type == 'polar':
+        elif self.pe_type == 'dual':
+            x = self.pe_module(x)
+        elif self.pe_type == 'polar_only':
             x = self.pe_module(x)
         
         x = self.pos_drop(x)

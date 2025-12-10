@@ -4,6 +4,7 @@ import random
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from datetime import datetime
 from config import cfg
 from dataloader import get_dataloaders
 from model import VisionTransformer
@@ -38,12 +39,18 @@ def plot_results(histories):
     plt.legend()
     
     plt.tight_layout()
-    plt.savefig('comparison_result.png')
-    print("Graph saved as comparison_result.png")
+    
+    # 현재 날짜와 시간 가져오기
+    now = datetime.now()
+    timestamp = now.strftime("%y%m%d_%H%M%S")
+    filename = f'comparison_result_{timestamp}.png'
+    
+    plt.savefig(filename)
+    print(f"Graph saved as {filename}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default='all', choices=['all', 'baseline', 'rope', 'multi', 'polar'])
+    parser.add_argument('--mode', type=str, default='all', choices=['all', 'baseline', 'rope', 'polar_only', 'dual'])
     args = parser.parse_args()
 
     set_seed(cfg.seed)
@@ -51,7 +58,7 @@ if __name__ == '__main__':
     # Returns 3 Loaders
     train_loader, val_loader, test_loader = get_dataloaders()
     
-    modes = ['baseline', 'rope', 'multi', 'polar'] if args.mode == 'all' else [args.mode]
+    modes = ['baseline', 'rope', 'polar_only', 'dual'] if args.mode == 'all' else [args.mode]
     histories = {}
     test_results = {}
 

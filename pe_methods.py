@@ -151,8 +151,8 @@ class MultiScalePE(nn.Module):
         # 3. Add to input
         return x + pe.unsqueeze(0)
 
-# (D) Polar PE: Cartesian + Polar Coordinate Positional Encoding
-class PolarPE(nn.Module):
+# (D) Dual PE: Cartesian + Polar Coordinate Positional Encoding
+class DualPE(nn.Module):
     def __init__(self, embed_dim, grid_size):
         super().__init__()
         assert embed_dim % 4 == 0  # Must divide by 4
@@ -187,6 +187,42 @@ class PolarPE(nn.Module):
         emb = np.concatenate([emb_x, emb_y, emb_r, emb_theta], axis=1)
         
         # Add CLS token
+        emb = np.concatenate([np.zeros([1, embed_dim]), emb], axis=0)
+        
+        self.register_buffer('pos_embed', torch.from_numpy(emb).float())
+
+    def forward(self, x):
+        return x + self.pos_embed.unsqueeze(0)
+
+# (E) Polar Only PE: Polar Coordinate Positional Encoding
+class PolarOnlyPE(nn.Module):
+    def __init__(self, embed_dim, grid_size):
+        super().__init__()
+        assert embed_dim % 2 == 0
+        
+        half_dim = embed_dim // 2
+        
+        # 1. Grid 생성 (x, y)
+        grid_h = np.arange(grid_size, dtype=np.float32)
+        grid_w = np.arange(grid_size, dtype=np.float32)
+        grid_x, grid_y = np.meshgrid(grid_w, grid_h) # x, y
+        
+        # 2. Polar 변환 (r, theta)
+        center = (grid_size - 1) / 2.0
+        x_centered = grid_x - center
+        y_centered = grid_y - center
+        
+        r = np.sqrt(x_centered**2 + y_centered**2)
+        theta = np.arctan2(y_centered, x_centered)
+        
+        # 3. 각각 인코딩 (r, theta)
+        emb_r = get_1d_sincos_pos_embed_from_grid(half_dim, r)
+        emb_theta = get_1d_sincos_pos_embed_from_grid(half_dim, theta)
+        
+        # 4. 합치기
+        emb = np.concatenate([emb_r, emb_theta], axis=1)
+        
+        # CLS 토큰 추가
         emb = np.concatenate([np.zeros([1, embed_dim]), emb], axis=0)
         
         self.register_buffer('pos_embed', torch.from_numpy(emb).float())
