@@ -97,7 +97,6 @@ class VisionTransformer(nn.Module):
                 requires_grad=False
             )
         elif pe_type == 'multiscale':
-            # block_size는 cfg에서 가져오거나 기본값 2 사용
             block_size = getattr(cfg, 'block_size', 2) 
             self.pe_module = MultiScalePE(self.embed_dim, self.img_size//self.patch_size, block_size=block_size)
         elif pe_type == 'dual':

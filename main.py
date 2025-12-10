@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     set_seed(cfg.seed)
     
-    # Loader가 3개 리턴됨
+    # Returns 3 Loaders
     train_loader, val_loader, test_loader = get_dataloaders()
     
     modes = ['baseline', 'rope', 'polar_only', 'dual'] if args.mode == 'all' else [args.mode]
@@ -67,13 +67,13 @@ if __name__ == '__main__':
         set_seed(cfg.seed) 
         
         model = VisionTransformer(pe_type=mode)
-        # train_model 이제 history와 test_acc 두 개를 반환함
+        # train_model now returns both history and final test_acc
         hist, final_test_acc = train_model(model, train_loader, val_loader, test_loader, mode)
         
         histories[mode] = hist
         test_results[mode] = final_test_acc
 
-    # 최종 결과 요약 출력
+    # Print Final Summary
     print("\n" + "="*30)
     print("      FINAL TEST RESULTS      ")
     print("="*30)

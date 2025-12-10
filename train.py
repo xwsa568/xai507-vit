@@ -14,7 +14,7 @@ def train_model(model, train_loader, val_loader, test_loader, pe_name):
 
     print(f"Start Training: {pe_name}")
     
-    # 기록용 딕셔너리
+    # Dictionary for logging
     history = {'train_loss': [], 'val_acc': []}
     
     best_acc = 0.0
