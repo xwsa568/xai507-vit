@@ -10,10 +10,10 @@ pip install -r requirements.txt
 
 ## Run Commands
 
-### 1\. Run with Multi-scale PE (Proposed)
+### 1\. Run with DCPE (Proposed)
 
 ```bash
-python main.py --mode multiscale
+python main.py --mode polar
 ```
 
 ### 2\. Run with Baseline
