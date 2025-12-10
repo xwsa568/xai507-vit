@@ -7,7 +7,7 @@ from config import cfg
 import numpy as np
 
 def get_dataloaders():
-    # 1. Augmentation 설정
+    # 1. Define Augmentation
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -20,9 +20,9 @@ def get_dataloaders():
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
 
-    # 2. 전체 학습 데이터셋 로드 (인덱스 분리를 위해 Raw 데이터 먼저 준비)
-    # transform은 나중에 Subset에 적용하는 것이 까다로우므로, 
-    # 두 개의 데이터셋 객체를 만들고 인덱스로 나눕니다.
+    # 2. Load full training dataset (Prepare raw data first for index splitting)
+    # Applying transform to Subset later can be tricky,
+    # so we create two dataset objects and split them by index.
     full_trainset_aug = torchvision.datasets.CIFAR10(
         root='./data', train=True, download=True, transform=transform_train)
     full_trainset_clean = torchvision.datasets.CIFAR10(
@@ -33,13 +33,13 @@ def get_dataloaders():
     indices = list(range(num_train))
     split = int(np.floor(0.1 * num_train)) # 10% for validation
     
-    # Reproducibility를 위해 shuffle 후 split
+    # Shuffle and split for reproducibility
     np.random.seed(cfg.seed)
     np.random.shuffle(indices)
     
     train_idx, val_idx = indices[split:], indices[:split]
 
-    # Subset 생성 (Train엔 Augmentation, Val엔 Clean Transform 적용)
+    # Create Subsets (Apply Augmentation to Train, Clean Transform to Val)
     train_ds = Subset(full_trainset_aug, train_idx)
     val_ds = Subset(full_trainset_clean, val_idx)
     
@@ -47,7 +47,7 @@ def get_dataloaders():
     test_ds = torchvision.datasets.CIFAR10(
         root='./data', train=False, download=True, transform=transform_test)
 
-    # 4. DataLoader 생성
+    # 4. Create DataLoaders
     trainloader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=2)
     valloader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=2)
     testloader = DataLoader(test_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=2)
